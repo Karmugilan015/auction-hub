@@ -24,7 +24,7 @@ function Signup() {
 
     try 
     {
-      const res = await axios.post('https://online-aution-platform-api.onrender.com/signup', {
+      const res = await axios.post('https://auction-hub-hldk.onrender.com/signup', {
         username,
         password, 
       });
