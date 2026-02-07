@@ -33,7 +33,7 @@ if (!SECRET_KEY || SECRET_KEY.length < 32) {
 }
 
 // MongoDB Atlas connection
- await mongoose.connect(MONGODB_URI)
+ await mongoose.connect('MONGODB_URI')
   .then(() => console.log('MongoDB Atlas connected successfully'))
   .catch(err => {
     console.error('MongoDB connection error:', err);
