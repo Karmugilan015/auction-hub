@@ -11,7 +11,7 @@ function AuctionItem() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const res = await axios.get(`https://online-aution-platform-api.onrender.com/${id}`);
+        const res = await axios.get(`https://auction-hub-hldk.onrender.com/${id}`);
         setItem(res.data);
       } catch (error) {
         setMessage('Error fetching auction item: ' + error.response?.data?.message || error.message);
