@@ -27,7 +27,7 @@ function PostAuction() {
 
     try {
       await axios.post(
-        'https://online-aution-platform-api.onrender.com/auction',
+        'https://auction-hub-hldk.onrender.com/auction',
         { itemName, description, startingBid, closingTime },
         { headers: { Authorization: `Bearer ${token}` } } // Send token in headers
       );
