@@ -1,109 +1,239 @@
 import express from "express";
-import mongoose  from "mongoose";
+import mongoose from "mongoose";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log(process.env.SECRET_KEY)
-console.log(process.env.MONGODB_URI)
 const app = express();
 
-// Middleware
+// ================= MIDDLEWARE =================
 app.use(express.json());
 app.use(cors());
 
-// Environment variables
+// ================= ENV VARIABLES =================
 const PORT = process.env.PORT || 5001;
 const MONGODB_URI = process.env.MONGODB_URI;
 const SECRET_KEY = process.env.SECRET_KEY;
 
-if (!SECRET_KEY || SECRET_KEY.length < 32) {
-  throw new Error("SECRET_KEY must be at least 32 characters long");
-}
-
-
-// Validate SECRET_KEY
-if (!SECRET_KEY || SECRET_KEY.length < 32) {
-  console.error('FATAL ERROR: SECRET_KEY is too short or missing!');
-  console.error('Please set a SECRET_KEY of at least 32 characters in environment variables');
+// Validate environment variables
+if (!MONGODB_URI) {
+  console.error("❌ MONGODB_URI is missing in .env");
   process.exit(1);
 }
 
-// MongoDB Atlas connection
-console.log(MONGODB_URI)
- await mongoose.connect(MONGODB_URI)
-  .then(() => console.log('MongoDB Atlas connected successfully'))
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
+if (!SECRET_KEY || SECRET_KEY.length < 32) {
+  console.error("❌ SECRET_KEY must be at least 32 characters long");
+  process.exit(1);
+}
+
+// ================= DATABASE CONNECTION =================
+const connectDB = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI);
+    console.log("✅ MongoDB connected successfully");
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error.message);
     process.exit(1);
-  });
+  }
+};
 
-
-// User Schema
+// ================= SCHEMAS =================
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
 
-const User = mongoose.model('User', userSchema);
-
-// Auction Item Schema
 const auctionItemSchema = new mongoose.Schema({
-  itemName: String,
-  description: String,
-  currentBid: Number,
-  highestBidder: String,
-  closingTime: Date,
+  itemName: { type: String, required: true },
+  description: { type: String, required: true },
+  currentBid: { type: Number, required: true },
+  highestBidder: { type: String, default: "" },
+  closingTime: { type: Date, required: true },
   isClosed: { type: Boolean, default: false },
-  startingBid: Number,
+  startingBid: { type: Number, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
-const AuctionItem = mongoose.model('AuctionItem', auctionItemSchema);
+const User = mongoose.model("User", userSchema);
+const AuctionItem = mongoose.model("AuctionItem", auctionItemSchema);
 
-// Middleware to verify token
+// ================= AUTH MIDDLEWARE =================
 const authenticate = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+  const authHeader = req.headers.authorization;
 
-  jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid Token' });
-    req.user = user;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
     next();
+  } catch (error) {
+    return res.status(403).json({ message: "Invalid or expired token" });
+  }
+};
+
+// ================= ROUTES =================
+
+// Health check
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    mongodb:
+      mongoose.connection.readyState === 1
+        ? "connected"
+        : "disconnected",
+  });
+});
+
+// Root
+app.get("/", (req, res) => {
+  res.json({ message: "Auction API Server is running" });
+});
+
+// ================= AUTH ROUTES =================
+app.post("/signup", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password)
+      return res.status(400).json({ message: "All fields required" });
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser)
+      return res.status(400).json({ message: "Username already exists" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      username,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    console.error("Signup error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.post("/signin", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+    if (!user)
+      return res.status(400).json({ message: "Invalid credentials" });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid)
+      return res.status(400).json({ message: "Invalid credentials" });
+
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      message: "Signin successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Signin error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// ================= AUCTION ROUTES =================
+app.post("/auction", authenticate, async (req, res) => {
+  try {
+    const { itemName, description, startingBid, closingTime } = req.body;
+
+    if (!itemName || !description || !startingBid || !closingTime)
+      return res.status(400).json({ message: "All fields required" });
+
+    const newItem = await AuctionItem.create({
+      itemName,
+      description,
+      currentBid: startingBid,
+      startingBid,
+      closingTime,
+    });
+
+    res.status(201).json({
+      message: "Auction created",
+      item: newItem,
+    });
+  } catch (error) {
+    console.error("Create auction error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.get("/auctions", async (req, res) => {
+  try {
+    const auctions = await AuctionItem.find().sort({ createdAt: -1 });
+    res.json(auctions);
+  } catch (error) {
+    console.error("Fetch auctions error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.post("/bid/:id", authenticate, async (req, res) => {
+  try {
+    const { bid } = req.body;
+    const item = await AuctionItem.findById(req.params.id);
+
+    if (!item)
+      return res.status(404).json({ message: "Auction not found" });
+
+    if (item.isClosed || new Date() > item.closingTime) {
+      item.isClosed = true;
+      await item.save();
+      return res.status(400).json({
+        message: "Auction closed",
+        winner: item.highestBidder,
+      });
+    }
+
+    if (bid <= item.currentBid)
+      return res.status(400).json({
+        message: "Bid must be higher than current bid",
+      });
+
+    item.currentBid = bid;
+    item.highestBidder = req.user.username;
+
+    await item.save();
+
+    res.json({
+      message: "Bid successful",
+      item,
+    });
+  } catch (error) {
+    console.error("Bid error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// ================= START SERVER =================
+const startServer = async () => {
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
   });
 };
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Auction API Server is running',
-    endpoints: {
-      health: '/health',
-      signup: '/signup (POST)',
-      signin: '/signin (POST)',
-      auctions: '/auctions (GET)',
-      createAuction: '/auction (POST) - requires auth',
-      bid: '/bid/:id (POST) - requires auth'
-    }
-  });
-});
-
-// Signup Route
-app.post('/signup', async (req, res) => {
-  try {
-    const { username, password } = req.body;
+startServer();    const { username, password } = req.body;
     if (!username || !password) {
       return res.status(400).json({ message: 'Username and password required' });
     }
