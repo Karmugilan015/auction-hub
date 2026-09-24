@@ -14,7 +14,6 @@ app.use(express.json());
 app.use(cors());
 
 // Environment variables
-const PORT = process.env.PORT || 5001;
 const MONGODB_URI = process.env.MONGODB_URI;
 const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -604,6 +603,6 @@ app.post('/bid/:id', authenticate, async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Health check: ${PORT}/health`);
+  console.log(`Server is running on port`);
+  
 });
