@@ -7,8 +7,6 @@ import dotenv from "dotenv"
 
 dotenv.config();
 
-console.log(process.env.SECRET_KEY)
-console.log(process.env.MONGODB_URI)
 const app = express();
 
 // Middleware
@@ -607,5 +605,5 @@ app.post('/bid/:id', authenticate, async (req, res) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Health check: ${PORT}/health`);
 });
