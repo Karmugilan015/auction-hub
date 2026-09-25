@@ -10,7 +10,7 @@ function Dashboard() {
 
     const fetchItems = async () => {
       try {
-        const res = await axios.get('http://localhost:5001/auctions');
+        const res = await axios.get('https://auction-hub-hldk.onrender.com/auctions');
         setItems(res.data);
       } catch (error) {
         console.error('Error fetching auctions:', error);
