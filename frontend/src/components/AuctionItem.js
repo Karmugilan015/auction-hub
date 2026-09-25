@@ -11,7 +11,7 @@ function AuctionItem() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const res = await axios.get(`http://localhost:5001/auctions/${id}`);
+        const res = await axios.get(`https://auction-hub-hldk.onrender.com/auctions/${id}`);
         setItem(res.data);
       } catch (error) {
         setMessage('Error fetching auction item: ' + error.response?.data?.message || error.message);
@@ -31,7 +31,7 @@ function AuctionItem() {
     }
 
     try {
-      const res = await axios.post(`http://localhost:5001/bid/${id}`, { bid, username });
+      const res = await axios.post(`https://auction-hub-hldk.onrender.com/bid/${id}`, { bid, username });
       setMessage(res.data.message);
       if (res.data.winner) {
         setMessage(`Auction closed. Winner: ${res.data.winner}`);
