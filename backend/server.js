@@ -54,17 +54,6 @@ createdAt: { type: Date, default: Date.now },
 
 const AuctionItem = mongoose.model('AuctionItem', auctionItemSchema);
 
-// Middleware to verify token
-const authenticate = (req, res, next) => {
-const token = req.headers.authorization?.split(' ')[1];
-if (!token) return res.status(401).json({ message: 'Unauthorized' });
-
-jwt.verify(token, SECRET_KEY, (err, user) => {
-if (err) return res.status(403).json({ message: 'Invalid Token' });
-req.user = user;
-next();
-});
-};
 
 // Health check endpoint
 app.get('/health', (req, res) => {
