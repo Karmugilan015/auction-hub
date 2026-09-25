@@ -12,9 +12,9 @@ import './App.css';
 function App() {
   //isAuthenticated is the state, setIsAuthenticated changes the state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  //loads when the component load
+
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     setIsAuthenticated(!!token);
@@ -23,7 +23,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     setIsAuthenticated(false);
-    // navigate('/signin');
+    navigate('/signin');
   };
 
   return (
