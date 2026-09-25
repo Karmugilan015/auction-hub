@@ -29,18 +29,15 @@ function App() {
   return (
     <Router>
       <div className="app">
-        <header>
+  
           <h1>Auction App</h1>
-          <nav>
+          <nav><header>
             <Link to="/signup" className="nav-link">Signup</Link>
             <Link to="/signin" className="nav-link">Signin</Link>
-            <Link to="/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/post-auction" className="nav-link">Post Auction</Link>
             {isAuthenticated && (
               <button style={{ marginLeft: '10px', background: 'red', color: 'white' }} onClick={handleLogout} className="nav-link logout-button">Logout</button>
-            )}
+            )}</header>
           </nav>
-        </header>
         <main>
           <Routes>
            <Route path="/" element={<Landing/>} />
@@ -53,7 +50,7 @@ function App() {
           
         </main>
         <footer>
-          <p>&copy; 2024 Auction App. All rights reserved.</p>
+          <p> &copy; 2024 Auction App. All rights reserved.</p>
           <p>Welcome to the best place to buy and sell items through auctions!</p>
         </footer>
       </div>
