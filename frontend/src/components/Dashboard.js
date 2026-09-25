@@ -7,15 +7,10 @@ function Dashboard() {
   const nav = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      nav('/signin'); // Redirect to signin if not authenticated
-      return;
-    }
 
     const fetchItems = async () => {
       try {
-        const res = await axios.get('https://auction-hub-hldk.onrender.com/auctions');
+        const res = await axios.get('http://localhost:5001/auctions');
         setItems(res.data);
       } catch (error) {
         console.error('Error fetching auctions:', error);
@@ -33,7 +28,7 @@ function Dashboard() {
   return (
     <div>
       <h2>Auction Dashboard</h2>
-      <h1> Bla bla bla </h1>
+      <h1> Welcome to the Auction Dashboard </h1>
 
       {/* 🔹 Logout Button 
       <button onClick={handleLogout} style={{ marginLeft: '10px', background: 'red', color: 'white' }}>

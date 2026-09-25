@@ -18,18 +18,11 @@ function PostAuction() {
 
   const handlePostAuction = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      alert('You must be signed in to post an auction.');
-      navigate('/signin');
-      return;
-    }
-
     try {
       await axios.post(
-        'https://auction-hub-hldk.onrender.com/auction',
-        { itemName, description, startingBid, closingTime },
-        { headers: { Authorization: `Bearer ${token}` } } // Send token in headers
+        'http://localhost:5001/auction',
+        { itemName, description, startingBid, closingTime }
+         
       );
 
       alert('Auction item posted!');

@@ -13,11 +13,12 @@ function Signin() {
     setError('');
 
     try {
-      const res = await axios.post('https://auction-hub-hldk.onrender.com/signin', { username, password });
-      console.log('Signin Response:', res.data);
+      const res = await axios.post('http://localhost:5001/signin', { username, password });
+      console.log('Signin Response:', res.data.message);
 
-      if (res.data.token) {
-        localStorage.setItem('authToken', res.data.token);
+      if (res.data.success === true) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        alert('Signin successful! ');
         navigate('/dashboard'); // Redirect to dashboard
       } else {
         setError('Invalid credentials');
