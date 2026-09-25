@@ -20,7 +20,7 @@ function PostAuction() {
     e.preventDefault();
     try {
       await axios.post(
-        'http://localhost:5001/auction',
+        'https://auction-hub-hldk.onrender.com/auction',
         { itemName, description, startingBid, closingTime }
          
       );
