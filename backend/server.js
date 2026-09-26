@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: 'http://localhost:3000', // Replace with your frontend URL
+  origin: 'https://auction-hub-1-jdyt.onrender.com', // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -119,7 +119,7 @@ if (!user) {
   return res.status(400).json({ message: 'Invalid username' });  
 }  
 
-const isPasswordValid = await bcrypt.compare(password, user.password);  
+const isPasswordValid = await bcrypt.compare(String(password), user.password);  
 if (!isPasswordValid) {  
   return res.status(400).json({ message: 'Invalid password' });  
 }  
